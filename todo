@@ -1,0 +1,88 @@
+#!/usr/bin/env ruby
+
+$LOAD_PATH.unshift(File.dirname(__FILE__) + '/lib')
+
+require 'optparse'
+require 'ostruct'
+require 'yaml'
+require "todolist.rb"
+
+config = YAML.load(File.read("#{Dir.home}/.todo.rc"))
+CALS = config['cals'].keys
+
+VERSION = "todo Version 0.3"
+
+class OptParse
+  def self.parse(args)
+    options = OpenStruct.new
+    options.summary = ""
+    options.nr = ''
+    options.calendar = ""
+    options.inputfile = ""
+    options.showall = false
+    options.inplace = false
+    options.encoding = "utf8"
+    options.transfer_type = :auto
+    options.verbose = false
+    options.help = false
+
+    opt_parser = OptionParser.new do |opts|
+      opts.banner = "Usage: todo [options] calendarname"
+
+      opts.separator ""
+      opts.separator "Specific options:"
+
+      opts.on("-a", "--add SUMMARY", "Add a new item with text SUMMARY to the calendar") do |summary|
+        options.summary = summary
+      end
+
+      opts.on("-d", "--del NR", "Delete item number NR, with NR being a single number, a list separated with comma or 'done' to delete all entries marked as done") do |nr|
+        options.nr = nr
+      end
+      
+      opts.on("-s", "--show", "Show all entries") do
+        options.showall = true
+      end
+
+      opts.on("-f", "--file INPUTFILE", "Read entries from file") do |inputfile|
+        options.inputfile = inputfile
+      end
+
+      opts.on_tail("-v", "--version", "Show version") do
+        puts VERSION
+        exit
+      end
+
+      opts.on_tail("-i", "--info", "Info on todo") do
+        puts "Show: todo [list]"
+        puts "Add: todo -a [item] [list]"
+        puts "Add multiple items: todo --file YAMLFILE"
+        puts "Delete: todo -d [itemnr] [list]"
+        puts "Delete all marked as done: todo -d done [list]"
+        puts "Currently available lists:"
+        CALS.each { |k| puts k }
+        exit
+      end
+
+    end
+
+    opt_parser.parse!(args)
+    options
+  end
+end
+
+options = OptParse.parse(ARGV)
+options.calendar = ARGV[-1]
+options.calendar ||= 'stefan'
+
+td = TodoList.new options.calendar, config
+
+if !options.inputfile.empty?
+  td.createFromFile options.inputfile
+elsif !options.summary.empty?
+  td.create options.summary
+elsif !options.nr.empty?
+  td.delete options.nr
+end
+
+td.read options.showall

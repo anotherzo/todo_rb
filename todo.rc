@@ -1,0 +1,9 @@
+cals:
+  einkaufen:
+  - /remote.php/caldav/calendars/myusername/einkaufen
+  packen: 
+  - /remote.php/caldav/calendars/myusername/packen
+host: some.domain.com
+port: 443
+user: myusername
+passwd: mysecretpassword
